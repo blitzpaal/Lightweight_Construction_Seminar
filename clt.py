@@ -29,6 +29,7 @@ R_m12 = 84  # Shear strength in MPa
 # thickness (in mm) and z-position (in mm, calculated later) of each layer
 stack = np.array([[0,t_ply,0],[45,t_ply,0],[45,t_ply,0],[90,t_ply,0],[-45,t_ply,0],[-45,t_ply,0],
 [-45,t_ply,0],[-45,t_ply,0],[90,t_ply,0],[45,t_ply,0],[45,t_ply,0],[0,t_ply,0]],float)
+
 stack[:,0] = np.deg2rad(stack[:,0]) # transform ply angle from degree to radian
 
 # Stiffness matrix of UD-Layer
@@ -40,12 +41,14 @@ Q_0 = np.array([[E_11/(1-v_12*v_21),v_21*E_11/(1-v_12*v_21),0],
 # since there is only torque n_x, n_y, m_x, m_y and m_xy = 0
 # Schubfluss n_xy
 F = np.zeros(6)
-r_o = (d_i / 2) + t_ply * len(stack)
-A_m = math.pi*((r_o + (d_i / 2)) / 2) ** 2
-n_xy = T/(2*A_m)
+r_i = d_i / 2
+t = np.sum(stack[:,1])
+r_o = r_i + t
+A_m = np.pi*((r_o + r_i) / 2) ** 2
+tau_xy = T/(2*A_m*t)
+n_xy = tau_xy * t
 F[2] = n_xy
 #print(F)
-
 
 # Transform Laminate stiffness matrix of each layer
 Q_trans = np.empty((Q_0.shape[0],Q_0.shape[1],stack.shape[0]))
@@ -65,22 +68,37 @@ for i in range(stack.shape[0]):
     [np.sin(stack[i,0])**2, np.cos(stack[i,0])**2, -np.sin(stack[i,0])*np.cos(stack[i,0])],
     [-2*np.sin(stack[i,0])*np.cos(stack[i,0]), 2*np.sin(stack[i,0])*np.cos(stack[i,0]), np.cos(stack[i,0])**2-np.sin(stack[i,0])**2]])
 
-    Q_trans[:,:,i] = np.linalg.inv(T_s).dot(Q_0).dot(T_e)
+    Q_trans[:,:,i] = np.linalg.inv(T_s) @ Q_0 @ T_e
 
 # ABD Matrix calculation
 A = np.sum(Q_trans*stack[:,1],2)
 B = np.sum(Q_trans*stack[:,1]*(stack[:,2]-stack[:,1]/2),2)
 D = np.sum(Q_trans*(stack[:,1]**3/12+stack[:,1]*(stack[:,2]-stack[:,1]/2)**2),2)
 
+# Assemble ABD Matrix
 ABD = np.vstack((np.hstack((A, B)), np.hstack((B, D))))
 #print(ABD)
 
-# Dehnung im globalen Koordinatensystem
-eps_kap = np.linalg.inv(ABD) @ F
-eps = eps_kap[0:3]
-#print(eps)
+# Strain in global coordinate system
+eps_kap_0 = np.linalg.inv(ABD) @ F
+eps_0 = eps_kap_0[:3]
+kap_0 = eps_kap_0[3:]
 
-# Transformation der Dehnung
-eps_local = T_e @ eps
-#print(eps_local)
+# Global and local strain and local stress in each layer
+eps_xy = np.zeros((stack.shape[0],eps_0.shape[0]))
+eps_12 = np.zeros((stack.shape[0],eps_0.shape[0]))
+sig_12 = np.zeros((stack.shape[0],eps_0.shape[0]))
 
+for i in range(stack.shape[0]):
+    eps_xy[i,:] = eps_0 + stack[i,2] * kap_0
+
+    T_e = np.array([[np.cos(stack[i,0])**2, np.sin(stack[i,0])**2, np.sin(stack[i,0])*np.cos(stack[i,0])],
+    [np.sin(stack[i,0])**2, np.cos(stack[i,0])**2, -np.sin(stack[i,0])*np.cos(stack[i,0])],
+    [-2*np.sin(stack[i,0])*np.cos(stack[i,0]), 2*np.sin(stack[i,0])*np.cos(stack[i,0]), np.cos(stack[i,0])**2-np.sin(stack[i,0])**2]])
+
+    eps_12[i,:] = T_e @ eps_xy[i,:]
+
+    sig_12[i,:] = Q_0 @ eps_12[i,:]
+
+    # Tsai-Wu failure criterion
+    
