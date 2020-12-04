@@ -1,19 +1,44 @@
-from scipy.optimize import NonlinearConstraint, Bounds, differential_evolution, rosen
+from scipy.optimize import NonlinearConstraint, Bounds, differential_evolution, shgo, dual_annealing, minimize
 import numpy as np
-from Shaft_dimensioning import calculate_shaft_strength
+from Shaft_dimensioning import calculate_shaft_strength, compose_stack
+from CLT_calculation import calc_Q_0, CLT_ABD
 
-def symetric(x):
-    return x[0] - x[-1]
+# Material data
+t_ply = 0.125  # ply thickness in mm
+E_11 = 126000  # Longitudinal tensile modulus in MPa
+E_22 = 9000  # Transverse tensile modulus in MPa
+G_12 = 4600  # Shear modulus in MPa
+v_12 = 0.3  # Poisson’s ratio 1
 
-def balanced(x):
-    return np.sum(x)
+# Stiffness matrix of UD-Layer
+Q_0 = calc_Q_0(E_11, E_22, G_12, v_12)
 
-nlc = NonlinearConstraint(balanced, 0.0, 0.0)
+def balanced(stack_angle):
+    if symetric == True:
+        stack_angle = np.concatenate((stack_angle, np.flip(stack_angle)))
+    
+    stack = compose_stack(stack_angle, t_ply)
+    stack = compose_stack(stack_angle, t_ply)
+
+    ABD = CLT_ABD(stack, Q_0)
+
+    return ABD[0:2,2]
+
 # specify limits using a `Bounds` object.   
-bounds = Bounds([-90., -90., -90., -90., -90., -90., -90., -90., -90.], [90., 90., 90., 90., 90., 90., 90., 90., 90.])
+bounds = Bounds([-90., -90., -90., -90.], [90., 90., 90., 90.])
 
-#bounds = Bounds([-90., -90., -90., -90.], [90., 90., 90., 90.], )
+# Constraint for balanced laminate
+balanced_laminate = NonlinearConstraint(balanced, 0.0, 0.0)
 
-#result = differential_evolution(CLT_Shaft, bounds, constraints=(nlc))
-result = differential_evolution(calculate_shaft_strength, bounds)
-print(result.x, result.fun)
+# Constraint for symetric laminate
+symetric = True
+"""
+# Global optimization
+glob_result = differential_evolution(calculate_shaft_strength, bounds=bounds, args=(symetric,), constraints=(balanced_laminate))
+print(glob_result.x, glob_result.fun)
+"""
+# Local optimization
+x0 = np.array([  9.46864106,   9.44326912,  86.45727159, -25.24788767])
+
+loc_result = minimize(calculate_shaft_strength, x0, tol=1e-6, bounds=bounds, args=(symetric,), constraints=(balanced_laminate))
+print(loc_result.x, loc_result.fun)

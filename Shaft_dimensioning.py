@@ -4,6 +4,42 @@ import math
 from CLT_calculation import calc_Q_0, CLT_ABD, Shell_Engineering_Constants, CLT_Stress
 from Rotational_speed_Buckling import twisted_critical_speed, bending_critial_speed, torsion_buckling
 
+# Geometry and Load data
+l = 500  # shaft length in mm
+l_f = 35 # flange length in mm
+l_s = 500-2*l_f # free length betwwen flanges in mm
+d_i = 45  # inner diameter in mm
+T_n = 400*1000  # net torque in Nmm
+RF = 2  # reserve factor
+T = T_n*RF  # torque with reserve factor in Nmm
+N_n = 5000/60  # net rotational speed in 1/s
+N = N_n*RF  # rotational speed with reserve factor in 1/s
+
+# Material data
+t_ply = 0.125  # ply thickness in mm
+E_11 = 126000  # Longitudinal tensile modulus in MPa
+E_22 = 9000  # Transverse tensile modulus in MPa
+G_12 = 4600  # Shear modulus in MPa
+v_12 = 0.3  # Poisson’s ratio 1
+rho = 1570 * 10**-12  # Density in Ns^2/mm^4
+R_m1Z = 1250  # Longitudinal tensile strength in MPa
+R_m2Z = 50  # Transverse tensile strength in MPa
+R_m1D = 1260  # Longitudinal compressive strength in MPa
+R_m2D = 210  # Transverse compressive strength in MPa
+R_m12 = 84  # Shear strength in MPa
+
+# Puck slope parameters
+p_tp_ten = 0.35
+p_tp_com = 0.3
+p_tt_ten = 0.25
+p_tt_com = 0.25
+
+# Laminate data
+stack = None
+F = None
+Q_0 = None
+ABD = None
+
 def stress_vector(T, stack, d_i):
     # since there is only torque n_x, n_y, m_x, m_y and m_xy = 0
     F = np.zeros(6)
@@ -32,37 +68,10 @@ def compose_stack(stack_angle, t_ply):
 
     return stack
 
-def calculate_shaft_strength(stack_angle):
-    # Geometry and Load data
-    l = 500  # shaft length in mm
-    l_f = 35 # flange length in mm
-    l_s = 500-2*l_f # free length betwwen flanges in mm
-    d_i = 45  # inner diameter in mm
-    T_n = 400*1000  # net torque in Nmm
-    RF = 2  # reserve factor
-    T = T_n*RF  # torque with reserve factor in Nmm
-    N_n = 5000/60  # net rotational speed in 1/s
-    N = N_n*RF  # rotational speed with reserve factor in 1/s
-
-    # Material data
-    t_ply = 0.125  # ply thickness in mm
-    E_11 = 126000  # Longitudinal tensile modulus in MPa
-    E_22 = 9000  # Transverse tensile modulus in MPa
-    G_12 = 4600  # Shear modulus in MPa
-    v_12 = 0.3  # Poisson’s ratio 1
-    rho = 1570 * 10**-12  # Density in Ns^2/mm^4
-    R_m1Z = 1250  # Longitudinal tensile strength in MPa
-    R_m2Z = 50  # Transverse tensile strength in MPa
-    R_m1D = 1260  # Longitudinal compressive strength in MPa
-    R_m2D = 210  # Transverse compressive strength in MPa
-    R_m12 = 84  # Shear strength in MPa
-
-    # Puck slope parameters
-    p_tp_ten = 0.35
-    p_tp_com = 0.3
-    p_tt_ten = 0.25
-    p_tt_com = 0.25
-
+def calculate_shaft_strength(stack_angle, symetric):
+    if symetric == True:
+        stack_angle = np.concatenate((stack_angle, np.flip(stack_angle)))
+    
     stack = compose_stack(stack_angle, t_ply)
 
     F = stress_vector(T, stack, d_i)
@@ -89,5 +98,4 @@ def calculate_shaft_strength(stack_angle):
 
     return max(f_E_max, RF_N, RF_T)
 
-calculate_shaft_strength(np.array([6.18907121, -81.88486508,  66.26657476,  66.3217936,  -66.45019217,
- -10.30983755, -78.47402368,  14.99067733,  75.88261162]))
+print(calculate_shaft_strength(np.array([  9.46864106,   9.44326912,  86.45727159, -25.24788767]), True))
