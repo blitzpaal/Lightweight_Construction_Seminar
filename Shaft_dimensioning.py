@@ -68,7 +68,16 @@ def compose_stack(stack_angle, t_ply):
 
     return stack
 
-def calculate_shaft_strength(stack_angle, symetric):
+def calculate_shaft_strength(stack_angle, balanced, symetric):
+    if balanced == True:
+        stack_angle_bal = np.zeros(stack_angle.shape[0]*2)
+        i=0
+        for angle in stack_angle:
+            stack_angle_bal[i] = angle
+            stack_angle_bal[i+1] = -angle
+            i = i+2
+        stack_angle = stack_angle_bal
+    
     if symetric == True:
         stack_angle = np.concatenate((stack_angle, np.flip(stack_angle)))
     
@@ -98,4 +107,6 @@ def calculate_shaft_strength(stack_angle, symetric):
 
     return max(f_E_max, RF_N, RF_T)
 
-print(calculate_shaft_strength(np.array([  9.46864106,   9.44326912,  86.45727159, -25.24788767]), True))
+balanced = False
+symetric = True
+print(calculate_shaft_strength(np.array([ 79.0,  85.0, -68.0,  23.0, -18.0]), balanced, symetric))

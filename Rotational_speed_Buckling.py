@@ -41,17 +41,18 @@ def bending_critial_speed(d_i, t, l_s, rho, E_Ax):
     N_crit = 946 * (1/f_max)**0.5
     """
 
-# Acc. to "The Use of Continuous Fiber Composites in Driveshafts", Duane V. Byerly, 1996
 def torsion_buckling(d_i, t, l_s, E_Ax, E_Ay):
-    #r_i = d_i / 2
-    #r_o = r_i + t
-    #r_m = (r_o+r_i)/2
-
-    #T_crit = 2 * np.pi * r_m**2 * t * 0.272 * (E_Ax*E_Ay**3)**(1/4) * (t/r_m)**(3/2)
+    r_i = d_i / 2
+    r_o = r_i + t
+    r_m = (r_o+r_i)/2
     
     d_o = d_i + 2*t
     d_m = (d_o+d_i)/2
     
-    T_crit = 1.854/(l_s)**0.5 * E_Ax**0.375 * E_Ay**0.625 * t**2.25 * d_m**1.25
+    # Acc. to "The Use of Continuous Fiber Composites in Driveshafts", Duane V. Byerly, 1996
+    # T_crit = 1.854/(l_s)**0.5 * E_Ax**0.375 * E_Ay**0.625 * t**2.25 * d_m**1.25
+
+    # Acc. to "Handbook of structural stability", Column Research Committee of Japan, Tokyo, Corona Publishing, 1971
+    T_crit = 2 * np.pi * r_m**2 * t * 0.272 * (E_Ax*E_Ay**3)**(1/4) * (t/r_m)**(3/2)
 
     return T_crit

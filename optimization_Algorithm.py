@@ -25,20 +25,24 @@ def balanced(stack_angle):
     return ABD[0:2,2]
 
 # specify limits using a `Bounds` object.   
-bounds = Bounds([-90., -90., -90., -90.], [90., 90., 90., 90.])
+bounds = Bounds([-90., -90., -90., -90., -90.], [90., 90., 90., 90., 90.])
 
 # Constraint for balanced laminate
 balanced_laminate = NonlinearConstraint(balanced, 0.0, 0.0)
 
 # Constraint for symetric laminate
+balanced = False
 symetric = True
-"""
+
 # Global optimization
-glob_result = differential_evolution(calculate_shaft_strength, bounds=bounds, args=(symetric,), constraints=(balanced_laminate))
+#glob_result = differential_evolution(calculate_shaft_strength, bounds=bounds, args=(balanced, symetric))
+glob_result = differential_evolution(calculate_shaft_strength, bounds=bounds, args=(balanced, symetric), constraints=(balanced_laminate))
+#glob_result = differential_evolution(calculate_shaft_strength, bounds=bounds, args=(balanced, symetric))
 print(glob_result.x, glob_result.fun)
 """
 # Local optimization
-x0 = np.array([  9.46864106,   9.44326912,  86.45727159, -25.24788767])
+x0 = np.array([ 78.50534888,  85.26160042, -68.21513918,  23.23875092, -18.11665592])
 
 loc_result = minimize(calculate_shaft_strength, x0, tol=1e-6, bounds=bounds, args=(symetric,), constraints=(balanced_laminate))
 print(loc_result.x, loc_result.fun)
+"""
