@@ -58,9 +58,21 @@ def Shell_Engineering_Constants(ABD, t):
     E_Ax = 1 / (ABD_inv[0,0]*t)
     E_Ay = 1 / (ABD_inv[1,1]*t)
     G_Axy = 1 / (ABD_inv[2,2]*t)
-    v_Axy = -ABD_inv[0,1]/ABD_inv[0,0]
-    #v_Ayx = -ABD_inv[0,1]/ABD_inv[1,1]
-    return E_Ax, E_Ay, G_Axy, v_Axy
+    v_Axy = -ABD_inv[0,1] / ABD_inv[0,0]
+    v_Ayx = -ABD_inv[0,1] / ABD_inv[1,1]
+
+    return E_Ax, E_Ay, G_Axy, v_Axy, v_Ayx
+
+def Plate_Engineering_Constants(ABD, t):
+    ABD_inv = np.linalg.inv(ABD)
+
+    E_Dx = 12 / (ABD_inv[3,3]*t**3)
+    E_Dy = 12 / (ABD_inv[4,4]*t**3)
+    G_Dxy = 12 / (ABD_inv[5,5]*t**3)
+    v_Dxy = -ABD_inv[3,4] / ABD_inv[3,3]
+    v_Dyx = -ABD_inv[3,4] / ABD_inv[4,4]
+
+    return E_Dx, E_Dy, G_Dxy, v_Dxy, v_Dyx
 
 def CLT_Stress(stack, Q_0, ABD, F, R_m1Z, R_m2Z, R_m1D, R_m2D, R_m12, p_tp_ten, p_tp_com, p_tt_ten, p_tt_com):
     # Strain in global coordinate system

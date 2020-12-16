@@ -16,7 +16,6 @@ def twisted_critical_speed(d_i, t, l_s, rho, G_Axy):
 
     return N_crit
 
-# Acc. to Haberhauer/Bodenstein S.307
 def bending_critial_speed(d_i, t, l_s, rho, E_Ax):
     r_i = d_i / 2
     r_o = r_i + t
@@ -24,24 +23,18 @@ def bending_critial_speed(d_i, t, l_s, rho, E_Ax):
     A = np.pi * (r_o**2-r_i**2)
     I_b = np.pi * (r_o**4-r_i**4) / 4
 
-    omega_crit = np.pi**2/l_s**2 * ((E_Ax*I_b)/(rho*A))**0.5
+    # Acc. to Haberhauer/Bodenstein S.307
+    #omega_crit = np.pi**2/l_s**2 * ((E_Ax*I_b)/(rho*A))**0.5
+    #N_crit = omega_crit / (2*np.pi)
 
-    N_crit = omega_crit / (2*np.pi)
+    d_m = d_i + t
+
+    # Acc. to Dickhut
+    N_crit = 0.5*np.pi/8**0.5 * d_m/l_s**2 * (E_Ax/rho)**0.5
 
     return N_crit
 
-"""
-    I_p = np.pi/2 * (r_o**4 - r_i**4)
-    I_A = 2*I_p
-
-    m = rho * l_s * np.pi*(r_o**2-r_i**2)
-
-    f_max = (rho * m * l_s**3) / (48 * E_Ax * I_A)
-
-    N_crit = 946 * (1/f_max)**0.5
-    """
-
-def torsion_buckling(d_i, t, l_s, E_Ax, E_Ay):
+def torsion_buckling(d_i, t, l_s, E_Ax, E_Ay, D_yy):
     r_i = d_i / 2
     r_o = r_i + t
     r_m = (r_o+r_i)/2
@@ -53,6 +46,12 @@ def torsion_buckling(d_i, t, l_s, E_Ax, E_Ay):
     # T_crit = 1.854/(l_s)**0.5 * E_Ax**0.375 * E_Ay**0.625 * t**2.25 * d_m**1.25
 
     # Acc. to "Handbook of structural stability", Column Research Committee of Japan, Tokyo, Corona Publishing, 1971
-    T_crit = 2 * np.pi * r_m**2 * t * 0.272 * (E_Ax*E_Ay**3)**(1/4) * (t/r_m)**(3/2)
+    # T_crit = 2 * np.pi * r_m**2 * t * 0.272 * (E_Ax*E_Ay**3)**(1/4) * (t/r_m)**(3/2)
+
+    k_l = 0.760
+    k_s = 1.030 # fixed bearing (0.925 for floating bearing)
+
+    # Acc. to Dickhut / "Instability of orthotropic cylindrical shells under combined torsion and hydrostatic pressure", Simitses, 1967
+    T_crit = k_l * k_s * (2*np.pi**3)/12**(3/8) * (r_m**(5/4)*t**(3/8))/l_s**0.5 * E_Ax**(3/8) * D_yy**(5/8)
 
     return T_crit

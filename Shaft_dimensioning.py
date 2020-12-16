@@ -1,12 +1,12 @@
 import numpy as np
 import math
 
-from CLT_calculation import calc_Q_0, CLT_ABD, Shell_Engineering_Constants, CLT_Stress
+from CLT_calculation import calc_Q_0, CLT_ABD, Shell_Engineering_Constants, Plate_Engineering_Constants, CLT_Stress
 from Rotational_speed_Buckling import twisted_critical_speed, bending_critial_speed, torsion_buckling
 
 # Geometry and Load data
 l = 500  # shaft length in mm
-l_f = 35 # flange length in mm
+l_f = 8 # flange length in mm
 l_s = 500-2*l_f # free length betwwen flanges in mm
 d_i = 45  # inner diameter in mm
 T_n = 400*1000  # net torque in Nmm
@@ -68,6 +68,11 @@ def compose_stack(stack_angle, t_ply):
 
     return stack
 
+def weight(rho, l, d_i, t):
+    m_shaft = rho*l*np.pi*(d_i+t)*t
+    return m_shaft
+
+
 def calculate_shaft_strength(stack_angle, balanced, symetric):
     if balanced == True:
         stack_angle_bal = np.zeros(stack_angle.shape[0]*2)
@@ -92,21 +97,25 @@ def calculate_shaft_strength(stack_angle, balanced, symetric):
 
     t = np.sum(stack[:,1])
 
-    E_Ax, E_Ay, G_Axy, v_Axy = Shell_Engineering_Constants(ABD, t)
+    E_Ax, E_Ay, G_Axy, v_Axy, v_Ayx = Shell_Engineering_Constants(ABD, t)
+    E_Dx, E_Dy, G_Dxy, v_Dxy, v_Dyx = Plate_Engineering_Constants(ABD, t)
 
     f_E_FF, f_E_IFF = CLT_Stress(stack, Q_0, ABD, F, R_m1Z, R_m2Z, R_m1D, R_m2D, R_m12, p_tp_ten, p_tp_com, p_tt_ten, p_tt_com)
 
     f_E_max = np.max((f_E_FF,f_E_IFF))
 
-    N_crit_twist = twisted_critical_speed(d_i, t, l_s, rho, G_Axy)
+    #N_crit_twist = twisted_critical_speed(d_i, t, l_s, rho, G_Axy)
     N_crit_bend = bending_critial_speed(d_i, t, l_s, rho, E_Ax)
-    RF_N = N / min(N_crit_twist, N_crit_bend)
+    #RF_N = N / min(N_crit_twist, N_crit_bend)
+    RF_N = N / N_crit_bend
 
-    T_crit = torsion_buckling(d_i, t, l_s, E_Ax, E_Ay)
+    T_crit = torsion_buckling(d_i, t, l_s, E_Ax, E_Ay, ABD[4,4])
     RF_T = T / T_crit
 
-    return max(f_E_max, RF_N, RF_T)
+    m_shaft = weight(rho, l, d_i, t)
+
+    return max(f_E_max, RF_N, RF_T) # Unit: ton
 
 balanced = False
 symetric = True
-print(calculate_shaft_strength(np.array([ 79.0,  85.0, -68.0,  23.0, -18.0]), balanced, symetric))
+print(calculate_shaft_strength(np.array([-53, 90,  0,   0,  53]), balanced, symetric))

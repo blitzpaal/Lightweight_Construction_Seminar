@@ -37,12 +37,12 @@ symetric = True
 # Global optimization
 #glob_result = differential_evolution(calculate_shaft_strength, bounds=bounds, args=(balanced, symetric))
 glob_result = differential_evolution(calculate_shaft_strength, bounds=bounds, args=(balanced, symetric), constraints=(balanced_laminate))
-#glob_result = differential_evolution(calculate_shaft_strength, bounds=bounds, args=(balanced, symetric))
 print(glob_result.x, glob_result.fun)
 """
 # Local optimization
-x0 = np.array([ 78.50534888,  85.26160042, -68.21513918,  23.23875092, -18.11665592])
+x0 = np.array([-87.67304421,  72.23818348, -17.94373709,  22.92491497])
 
-loc_result = minimize(calculate_shaft_strength, x0, tol=1e-6, bounds=bounds, args=(symetric,), constraints=(balanced_laminate))
+#loc_result = minimize(calculate_shaft_strength, x0, tol=1e-6, bounds=bounds, args=(balanced, symetric,), constraints=(balanced_laminate))
+loc_result = minimize(calculate_shaft_strength, x0, tol=1e-6, bounds=bounds, args=(balanced, symetric,))
 print(loc_result.x, loc_result.fun)
 """
