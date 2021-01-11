@@ -1,7 +1,6 @@
 import numpy as np
 import math
 
-# Acc. to Roloff/Matek S.408
 def twisted_critical_speed(d_i, t, l_s, rho, G_Axy):
     r_i = d_i / 2
     r_o = r_i + t
@@ -12,6 +11,7 @@ def twisted_critical_speed(d_i, t, l_s, rho, G_Axy):
 
     phi = 180/np.pi * l_s/(G_Axy*I_p)
 
+    # Acc. to S.408 "Maschinenelemente, Normung, Berechnung, Gestaltung", Roloff/Matek, Springer, 2019
     N_crit = 72.3 * (1/(phi*J))**0.5
 
     return N_crit
@@ -23,13 +23,13 @@ def bending_critial_speed(d_i, t, l_s, rho, E_Ax):
     A = np.pi * (r_o**2-r_i**2)
     I_b = np.pi * (r_o**4-r_i**4) / 4
 
-    # Acc. to Haberhauer/Bodenstein S.307
+    # Acc. to S.307 "Maschinenelmente, Gestalatung, Berechnung, Anwendung", Haberhauser/Bodenstein, Springer, 2014
     #omega_crit = np.pi**2/l_s**2 * ((E_Ax*I_b)/(rho*A))**0.5
     #N_crit = omega_crit / (2*np.pi)
 
     d_m = d_i + t
 
-    # Acc. to Dickhut
+    # Acc. to "Beitrag zur Auslegung und Gestaltung von Antriebswellen aus Faser-Kunststoff-Verbunden", Dickhut, 2013
     N_crit = 0.5*np.pi/8**0.5 * d_m/l_s**2 * (E_Ax/rho)**0.5
 
     return N_crit
@@ -51,7 +51,7 @@ def torsion_buckling(d_i, t, l_s, E_Ax, E_Ay, D_yy):
     k_l = 0.760
     k_s = 1.030 # fixed bearing (0.925 for floating bearing)
 
-    # Acc. to Dickhut / "Instability of orthotropic cylindrical shells under combined torsion and hydrostatic pressure", Simitses, 1967
+    # Acc. to "Beitrag zur Auslegung und Gestaltung von Antriebswellen aus Faser-Kunststoff-Verbunden", Dickhut, 2013 / "Instability of orthotropic cylindrical shells under combined torsion and hydrostatic pressure", Simitses, 1967
     T_crit = k_l * k_s * (2*np.pi**3)/12**(3/8) * (r_m**(5/4)*t**(3/8))/l_s**0.5 * E_Ax**(3/8) * D_yy**(5/8)
 
     return T_crit
