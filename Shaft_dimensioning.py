@@ -6,7 +6,7 @@ from Rotational_speed_Buckling import twisted_critical_speed, bending_critial_sp
 
 # Geometry and Load data
 l = 500  # shaft length in mm
-l_f = 8 # flange length in mm
+l_f = 19.5 # flange length in mm
 l_s = 500-2*l_f # free length betwwen flanges in mm
 d_i = 45  # inner diameter in mm
 T_n = 400*1000  # net torque in Nmm
@@ -40,7 +40,7 @@ F = None
 Q_0 = None
 ABD = None
 
-def stress_vector(T, stack, d_i):
+def load_vector(T, stack, d_i):
     # since there is only torque n_x, n_y, m_x, m_y and m_xy = 0
     F = np.zeros(6)
     r_i = d_i / 2
@@ -88,7 +88,7 @@ def calculate_shaft_strength(stack_angle, balanced, symetric):
     
     stack = compose_stack(stack_angle, t_ply)
 
-    F = stress_vector(T, stack, d_i)
+    F = load_vector(T, stack, d_i)
 
     # Stiffness matrix of UD-Layer
     Q_0 = calc_Q_0(E_11, E_22, G_12, v_12)
@@ -104,8 +104,8 @@ def calculate_shaft_strength(stack_angle, balanced, symetric):
 
     f_E_max = np.max((f_E_FF,f_E_IFF))
 
-    #N_crit_twist = twisted_critical_speed(d_i, t, l_s, rho, G_Axy)
-    N_crit_bend = bending_critial_speed(d_i, t, l_s, rho, E_Ax)
+    #N_crit_twist = twisted_critical_speed(d_i, t, l, rho, G_Axy)
+    N_crit_bend = bending_critial_speed(d_i, t, l, rho, E_Ax)
     #RF_N = N / min(N_crit_twist, N_crit_bend)
     RF_N = N / N_crit_bend
 
@@ -114,7 +114,7 @@ def calculate_shaft_strength(stack_angle, balanced, symetric):
 
     m_shaft = weight(rho, l, d_i, t)
 
-    return max(f_E_max, RF_N, RF_T) # Unit: ton
+    return max(f_E_max, RF_N, RF_T)
 
 balanced = False
 symetric = True

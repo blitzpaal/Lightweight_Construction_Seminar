@@ -24,11 +24,6 @@ def calc_Q_0(E_11, E_22, G_12, v_12):
     return Q_0
 
 def CLT_ABD(stack, Q_0):
-    # Laminate stack
-    # [angle, thickness, height] Laminate buildup from bottom to top with orientation (in degree),
-    # thickness (in mm) and z-position (in mm) of each layer
-    #stack = np.array([[0,t_ply,0],[45,t_ply,0],[45,t_ply,0],[90,t_ply,0],[-45,t_ply,0],[-45,t_ply,0], [-45,t_ply,0],[-45,t_ply,0],[90,t_ply,0],[45,t_ply,0],[45,t_ply,0],[0,t_ply,0]],float)
-
     # Transform Laminate stiffness matrix of each layer
     Q_trans = np.empty((Q_0.shape[0],Q_0.shape[1],stack.shape[0]))
 
@@ -112,14 +107,14 @@ def CLT_Stress(stack, Q_0, ABD, F, R_m1Z, R_m2Z, R_m1D, R_m2D, R_m12, p_tp_ten, 
         elif sig_12[i,0] < 0:
             f_E_FF[i] = np.abs(sig_12[i,0]) / R_m1D
 
-        if sig_12[i,1] >= 0:
+        if sig_12[i,1] >= 0: # Mode A
             f_E_IFF[i] = ((1-p_tp_ten*R_m2Z/R_m12)**2 * (sig_12[i,1]/R_m2Z)**2 + (sig_12[i,2]/R_m12)**2)**0.5 + p_tp_ten*sig_12[i,1]/R_m12
         else:
             R_tt_A = R_m12/(2*p_tp_com) * ((1+2*p_tp_com*R_m2D/R_m12)**0.5 - 1)
             tau_21c = R_m12 * (1+2*p_tt_com)**0.5
-            if sig_12[i,1] < 0 and 0 <= np.abs(sig_12[i,1]/sig_12[i,2]) <= np.abs(R_tt_A/tau_21c):
+            if sig_12[i,1] < 0 and 0 <= np.abs(sig_12[i,1]/sig_12[i,2]) <= np.abs(R_tt_A/tau_21c): # Mode B
                 f_E_IFF[i] = ((sig_12[i,2]/R_m12)**2 + (p_tp_com/R_m12*sig_12[i,1])**2)**0.5 + p_tp_com*sig_12[i,1]/R_m12
-            elif sig_12[i,1] < 0 and 0 <= np.abs(sig_12[i,2]/sig_12[i,1]) <= np.abs(tau_21c/R_tt_A):
+            elif sig_12[i,1] < 0 and 0 <= np.abs(sig_12[i,2]/sig_12[i,1]) <= np.abs(tau_21c/R_tt_A): # Mode C
                 f_E_IFF[i] = ((sig_12[i,2] / (2*(1+p_tt_com)*R_m12))**2 + (sig_12[i,1]/R_m2D)**2) * R_m2D/(-sig_12[i,1])
 
         #print("Puck FF: " + str(f_E_FF[i]) + " Puck IFF: " + str(f_E_IFF[i]))           
