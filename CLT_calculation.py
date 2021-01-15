@@ -69,7 +69,7 @@ def Plate_Engineering_Constants(ABD, t):
 
     return E_Dx, E_Dy, G_Dxy, v_Dxy, v_Dyx
 
-def CLT_Stress(stack, Q_0, ABD, F, R_m1Z, R_m2Z, R_m1D, R_m2D, R_m12, p_tp_ten, p_tp_com, p_tt_ten, p_tt_com):
+def CLT_Stress_Puck(stack, Q_0, ABD, F, R_m1Z, R_m2Z, R_m1D, R_m2D, R_m12, p_tp_ten, p_tp_com, p_tt_ten, p_tt_com):
     # Strain in global coordinate system
     eps_kap_0 = np.linalg.inv(ABD) @ F
     eps_0 = eps_kap_0[:3]
@@ -79,9 +79,6 @@ def CLT_Stress(stack, Q_0, ABD, F, R_m1Z, R_m2Z, R_m1D, R_m2D, R_m12, p_tp_ten, 
     eps_xy = np.zeros((stack.shape[0],eps_0.shape[0]))
     eps_12 = np.zeros((stack.shape[0],eps_0.shape[0]))
     sig_12 = np.zeros((stack.shape[0],eps_0.shape[0]))
-
-    # Stress exposure for each layer with Tsai-Wu criterion
-    #f_E_TW = np.zeros(stack.shape[0])
 
     # Stress exposure for each layer with Puck criterion
     f_E_FF = np.zeros(stack.shape[0])
@@ -95,11 +92,6 @@ def CLT_Stress(stack, Q_0, ABD, F, R_m1Z, R_m2Z, R_m1D, R_m2D, R_m12, p_tp_ten, 
         eps_12[i,:] = T_e @ eps_xy[i,:]
 
         sig_12[i,:] = Q_0 @ eps_12[i,:]
-
-        # Tsai-Wu failure criterion
-        #f_E_TW[i] = sig_12[i,0]**2/(R_m1Z*R_m1D) - sig_12[i,0]*sig_12[i,1]/(R_m1Z*R_m1D*R_m2Z*R_m2D)**0.5 + sig_12[i,1]**2/(R_m2Z*R_m2D) + sig_12[i,2]**2/R_m12**2 + sig_12[i,0]*(1/R_m1Z-1/R_m1D) + sig_12[i,1]*(1/R_m2Z-1/R_m2D)
-
-        #print("Tsai-Wu: " + str(f_E_TW[i]))  
 
         # Puck fibre failure criterion
         if sig_12[i,0] >= 0:
@@ -122,3 +114,35 @@ def CLT_Stress(stack, Q_0, ABD, F, R_m1Z, R_m2Z, R_m1D, R_m2D, R_m12, p_tp_ten, 
     #print(sig_12)
 
     return f_E_FF, f_E_IFF
+
+def CLT_Stress_TW(stack, Q_0, ABD, F, R_m1Z, R_m2Z, R_m1D, R_m2D, R_m12):
+    # Strain in global coordinate system
+    eps_kap_0 = np.linalg.inv(ABD) @ F
+    eps_0 = eps_kap_0[:3]
+    kap_0 = eps_kap_0[3:]
+
+    # Global and local strain and local stress in each layer
+    eps_xy = np.zeros((stack.shape[0],eps_0.shape[0]))
+    eps_12 = np.zeros((stack.shape[0],eps_0.shape[0]))
+    sig_12 = np.zeros((stack.shape[0],eps_0.shape[0]))
+
+    # Stress exposure for each layer with Tsai-Wu criterion
+    f_E_TW = np.zeros(stack.shape[0])
+
+    for i in range(stack.shape[0]):
+        eps_xy[i,:] = eps_0 + stack[i,2] * kap_0
+
+        T_e = calc_T_e(stack[i])
+
+        eps_12[i,:] = T_e @ eps_xy[i,:]
+
+        sig_12[i,:] = Q_0 @ eps_12[i,:]
+
+        # Tsai-Wu failure criterion
+        f_E_TW[i] = sig_12[i,0]**2/(R_m1Z*R_m1D) - sig_12[i,0]*sig_12[i,1]/(R_m1Z*R_m1D*R_m2Z*R_m2D)**0.5 + sig_12[i,1]**2/(R_m2Z*R_m2D) + sig_12[i,2]**2/R_m12**2 + sig_12[i,0]*(1/R_m1Z-1/R_m1D) + sig_12[i,1]*(1/R_m2Z-1/R_m2D)
+
+        #print("Tsai-Wu: " + str(f_E_TW[i]))       
+        
+    #print(sig_12)
+
+    return f_E_TW
