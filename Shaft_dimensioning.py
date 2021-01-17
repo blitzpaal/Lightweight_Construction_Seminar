@@ -10,10 +10,10 @@ l_f = 19.5 # flange length in mm
 l_s = 500-2*l_f # free length betwwen flanges in mm
 d_i = 45  # inner diameter in mm
 T_n = 400*1000  # net torque in Nmm
-RF = 2  # reserve factor
-T = T_n*RF  # torque with reserve factor in Nmm
+S = 2  # Safty factor
+T = T_n*S  # torque with reserve factor in Nmm
 N_n = 5000/60  # net rotational speed in 1/s
-N = N_n*RF  # rotational speed with reserve factor in 1/s
+N = N_n*S  # rotational speed with reserve factor in 1/s
 
 # Material data
 t_ply = 0.125  # ply thickness in mm
@@ -101,10 +101,8 @@ def calculate_shaft_strength(stack_angle, balanced, symetric):
     E_Dx, E_Dy, G_Dxy, v_Dxy, v_Dyx = Plate_Engineering_Constants(ABD, t)
 
     #f_E_FF, f_E_IFF = CLT_Stress_Puck(stack, Q_0, ABD, F, R_m1Z, R_m2Z, R_m1D, R_m2D, R_m12, p_tp_ten, p_tp_com, p_tt_ten, p_tt_com)
-    #f_E_max = np.max((f_E_FF,f_E_IFF))
-
-    f_E_TW = CLT_Stress_TW(stack, Q_0, ABD, F, R_m1Z, R_m2Z, R_m1D, R_m2D, R_m12)
-    f_E_max = np.max(f_E_TW)
+    f_E_FF, f_E_IFF = CLT_Stress_TW(stack, Q_0, ABD, F, R_m1Z, R_m2Z, R_m1D, R_m2D, R_m12)
+    f_E_max = np.max((f_E_FF,f_E_IFF))
 
     #N_crit_twist = twisted_critical_speed(d_i, t, l, rho, G_Axy)
     N_crit_bend = bending_critial_speed(d_i, t, l, rho, E_Ax)
@@ -120,4 +118,4 @@ def calculate_shaft_strength(stack_angle, balanced, symetric):
 
 balanced = False
 symetric = True
-print(calculate_shaft_strength(np.array([-53, 90,  0,   0,  53]), balanced, symetric))
+print(calculate_shaft_strength(np.array([90, 55, -55, 30, -30]), balanced, symetric))

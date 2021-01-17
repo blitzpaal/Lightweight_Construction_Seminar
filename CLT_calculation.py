@@ -127,7 +127,16 @@ def CLT_Stress_TW(stack, Q_0, ABD, F, R_m1Z, R_m2Z, R_m1D, R_m2D, R_m12):
     sig_12 = np.zeros((stack.shape[0],eps_0.shape[0]))
 
     # Stress exposure for each layer with Tsai-Wu criterion
-    f_E_TW = np.zeros(stack.shape[0])
+    #f_E_TW = np.zeros(stack.shape[0])
+    f_E_FF = np.zeros(stack.shape[0])
+    f_E_IFF = np.zeros(stack.shape[0])
+
+    a_11 = 1 / (R_m1Z*R_m1D)
+    a_22 = 1 / (R_m2Z*R_m2D)
+    a_12 = -(1/2) * (a_11*a_22)**0.5
+    a_1 = 1/R_m1Z - 1/R_m1D
+    a_2 = 1/R_m2Z - 1/R_m2D
+    b_12 = (1/R_m12)**2
 
     for i in range(stack.shape[0]):
         eps_xy[i,:] = eps_0 + stack[i,2] * kap_0
@@ -139,10 +148,20 @@ def CLT_Stress_TW(stack, Q_0, ABD, F, R_m1Z, R_m2Z, R_m1D, R_m2D, R_m12):
         sig_12[i,:] = Q_0 @ eps_12[i,:]
 
         # Tsai-Wu failure criterion
-        f_E_TW[i] = sig_12[i,0]**2/(R_m1Z*R_m1D) - sig_12[i,0]*sig_12[i,1]/(R_m1Z*R_m1D*R_m2Z*R_m2D)**0.5 + sig_12[i,1]**2/(R_m2Z*R_m2D) + sig_12[i,2]**2/R_m12**2 + sig_12[i,0]*(1/R_m1Z-1/R_m1D) + sig_12[i,1]*(1/R_m2Z-1/R_m2D)
+        if sig_12[i,0]>=0:
+            f_E_FF[i] = sig_12[i,0]/R_m1Z
+        else:
+            f_E_FF[i] = np.abs(sig_12[i,0]/R_m1D)
+
+        R_ii = a_11*sig_12[i,0]**2 + 2*a_12*sig_12[i,0]*sig_12[i,1] + a_22*sig_12[i,1]**2 + b_12*sig_12[i,2]**2
+        R_i = a_1*sig_12[i,0] + a_2*sig_12[i,1]   
+
+        f_E_IFF[i] = (R_i+(R_i**2+4*R_ii)**0.5)/2
+        
+        #f_E_TW[i] = sig_12[i,0]**2/(R_m1Z*R_m1D) - sig_12[i,0]*sig_12[i,1]/(R_m1Z*R_m1D*R_m2Z*R_m2D)**0.5 + sig_12[i,1]**2/(R_m2Z*R_m2D) + sig_12[i,2]**2/R_m12**2 + sig_12[i,0]*(1/R_m1Z-1/R_m1D) + sig_12[i,1]*(1/R_m2Z-1/R_m2D)
 
         #print("Tsai-Wu: " + str(f_E_TW[i]))       
         
     #print(sig_12)
 
-    return f_E_TW
+    return f_E_FF, f_E_IFF
