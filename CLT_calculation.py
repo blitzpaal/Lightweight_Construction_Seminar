@@ -37,13 +37,9 @@ def CLT_ABD(stack, Q_0):
     A = np.sum(Q_trans*stack[:,1],2)
     B = np.sum(Q_trans*stack[:,1]*(stack[:,2]-stack[:,1]/2),2)
     D = np.sum(Q_trans*(stack[:,1]**3/12+stack[:,1]*(stack[:,2]-stack[:,1]/2)**2),2)
-    #print(A)
-    #print(B)
-    #print(D)
 
     # Assemble ABD Matrix
     ABD = np.vstack((np.hstack((A, B)), np.hstack((B, D))))
-    #print(ABD)
 
     return ABD
 
@@ -93,12 +89,13 @@ def CLT_Stress_Puck(stack, Q_0, ABD, F, R_m1Z, R_m2Z, R_m1D, R_m2D, R_m12, p_tp_
 
         sig_12[i,:] = Q_0 @ eps_12[i,:]
 
-        # Puck fibre failure criterion
+        # Puck fiber failure criterion
         if sig_12[i,0] >= 0:
             f_E_FF[i] = np.abs(sig_12[i,0]) / R_m1Z
         elif sig_12[i,0] < 0:
             f_E_FF[i] = np.abs(sig_12[i,0]) / R_m1D
 
+        # Puck inter fiber failure criterion
         if sig_12[i,1] >= 0: # Mode A
             f_E_IFF[i] = ((1-p_tp_ten*R_m2Z/R_m12)**2 * (sig_12[i,1]/R_m2Z)**2 + (sig_12[i,2]/R_m12)**2)**0.5 + p_tp_ten*sig_12[i,1]/R_m12
         else:
@@ -109,13 +106,9 @@ def CLT_Stress_Puck(stack, Q_0, ABD, F, R_m1Z, R_m2Z, R_m1D, R_m2D, R_m12, p_tp_
             elif sig_12[i,1] < 0 and 0 <= np.abs(sig_12[i,2]/sig_12[i,1]) <= np.abs(tau_21c/R_tt_A): # Mode C
                 f_E_IFF[i] = ((sig_12[i,2] / (2*(1+p_tt_com)*R_m12))**2 + (sig_12[i,1]/R_m2D)**2) * R_m2D/(-sig_12[i,1])
 
-        #print("Puck FF: " + str(f_E_FF[i]) + " Puck IFF: " + str(f_E_IFF[i]))           
-        
-    #print(sig_12)
-
     return f_E_FF, f_E_IFF
 
-def CLT_Stress_TW(stack, Q_0, ABD, F, R_m1Z, R_m2Z, R_m1D, R_m2D, R_m12):
+def CLT_Stress_ZTL(stack, Q_0, ABD, F, R_m1Z, R_m2Z, R_m1D, R_m2D, R_m12):
     # Strain in global coordinate system
     eps_kap_0 = np.linalg.inv(ABD) @ F
     eps_0 = eps_kap_0[:3]
@@ -126,7 +119,7 @@ def CLT_Stress_TW(stack, Q_0, ABD, F, R_m1Z, R_m2Z, R_m1D, R_m2D, R_m12):
     eps_12 = np.zeros((stack.shape[0],eps_0.shape[0]))
     sig_12 = np.zeros((stack.shape[0],eps_0.shape[0]))
 
-    # Stress exposure for each layer with Tsai-Wu criterion
+    # Stress exposure for each layer with ZTL (Tsai-Wu) criterion
     #f_E_TW = np.zeros(stack.shape[0])
     f_E_FF = np.zeros(stack.shape[0])
     f_E_IFF = np.zeros(stack.shape[0])
@@ -147,7 +140,7 @@ def CLT_Stress_TW(stack, Q_0, ABD, F, R_m1Z, R_m2Z, R_m1D, R_m2D, R_m12):
 
         sig_12[i,:] = Q_0 @ eps_12[i,:]
 
-        # Tsai-Wu failure criterion
+        # ZTL failure criterion
         if sig_12[i,0]>=0:
             f_E_FF[i] = sig_12[i,0]/R_m1Z
         else:
@@ -158,10 +151,7 @@ def CLT_Stress_TW(stack, Q_0, ABD, F, R_m1Z, R_m2Z, R_m1D, R_m2D, R_m12):
 
         f_E_IFF[i] = (R_i+(R_i**2+4*R_ii)**0.5)/2
         
-        #f_E_TW[i] = sig_12[i,0]**2/(R_m1Z*R_m1D) - sig_12[i,0]*sig_12[i,1]/(R_m1Z*R_m1D*R_m2Z*R_m2D)**0.5 + sig_12[i,1]**2/(R_m2Z*R_m2D) + sig_12[i,2]**2/R_m12**2 + sig_12[i,0]*(1/R_m1Z-1/R_m1D) + sig_12[i,1]*(1/R_m2Z-1/R_m2D)
-
-        #print("Tsai-Wu: " + str(f_E_TW[i]))       
-        
-    #print(sig_12)
+        #Tsai-Wu failure criterion
+        #f_E_TW[i] = sig_12[i,0]**2/(R_m1Z*R_m1D) - sig_12[i,0]*sig_12[i,1]/(R_m1Z*R_m1D*R_m2Z*R_m2D)**0.5 + sig_12[i,1]**2/(R_m2Z*R_m2D) + sig_12[i,2]**2/R_m12**2 + sig_12[i,0]*(1/R_m1Z-1/R_m1D) + sig_12[i,1]*(1/R_m2Z-1/R_m2D)      
 
     return f_E_FF, f_E_IFF
