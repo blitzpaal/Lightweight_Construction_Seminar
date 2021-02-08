@@ -1,7 +1,7 @@
 import numpy as np
 import math
 
-from CLT_calculation import calc_Q_0, CLT_ABD, Shell_Engineering_Constants, Plate_Engineering_Constants, CLT_Stress_Puck, CLT_Stress_TW
+from CLT_calculation import calc_Q_0, CLT_ABD, Shell_Engineering_Constants, Plate_Engineering_Constants, CLT_Stress_Puck, CLT_Stress_ZTL
 from Rotational_speed_Buckling import twisted_critical_speed, bending_critial_speed, torsion_buckling
 
 # Geometry and Load data
@@ -101,20 +101,21 @@ def calculate_shaft_strength(stack_angle, balanced, symetric):
     E_Dx, E_Dy, G_Dxy, v_Dxy, v_Dyx = Plate_Engineering_Constants(ABD, t)
 
     #f_E_FF, f_E_IFF = CLT_Stress_Puck(stack, Q_0, ABD, F, R_m1Z, R_m2Z, R_m1D, R_m2D, R_m12, p_tp_ten, p_tp_com, p_tt_ten, p_tt_com)
-    f_E_FF, f_E_IFF = CLT_Stress_TW(stack, Q_0, ABD, F, R_m1Z, R_m2Z, R_m1D, R_m2D, R_m12)
-    f_E_max = np.max((f_E_FF,f_E_IFF))
+    f_E_FF, f_E_IFF = CLT_Stress_ZTL(stack, Q_0, ABD, F, R_m1Z, R_m2Z, R_m1D, R_m2D, R_m12)
+    RF_ply = 1 / np.max((f_E_FF,f_E_IFF))
 
     #N_crit_twist = twisted_critical_speed(d_i, t, l, rho, G_Axy)
     N_crit_bend = bending_critial_speed(d_i, t, l, rho, E_Ax)
-    #RF_N = N / min(N_crit_twist, N_crit_bend)
-    RF_N = N / N_crit_bend
+    #RF_N = min(N_crit_twist, N_crit_bend) / N
+    RF_N = N_crit_bend / N
 
     T_crit = torsion_buckling(d_i, t, l_s, E_Ax, E_Ay, ABD[4,4])
-    RF_T = T / T_crit
+    RF_T = T_crit / T
 
     m_shaft = weight(rho, l, d_i, t)
 
-    return max(f_E_max, RF_N, RF_T)
+    return min(RF_ply, RF_N, RF_T)
+    #return 1 / min(RF_ply, RF_N, RF_T) # Use for optimization
 
 balanced = False
 symetric = True
